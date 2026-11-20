@@ -67,6 +67,7 @@
 | 手段 | 阶段 | 说明 |
 |---|---|---|
 | 温度缩放 | Phase 0 起 | 单参数 T，最小化 NLL；calib/holdout 按 id 哈希 50/50 切分，防泄漏 |
+| 小样本收缩 | Phase 0 起 | T_final = T_fit^(n/(n+n0))，n0=200 伪计数；防小样本高置信错误主导 NLL（实测 holdout ECE 0.081→0.028） |
 | label smoothing / focal | Phase 1 训练期 | 抑制过度自信 |
 | 分组温度 | Phase 2 | 按题型/领域分别拟合（noul 与 score 的置信度分布不同） |
 | 拒答 | Phase 0 起 | max prob < τ → answer=null；报告 coverage/selective-accuracy 曲线 |
@@ -129,4 +130,6 @@ jue/
 - ⏳ hf_local 后端已实现，本机无 torch，未做实机验证（`pip install jue[hf]` 后可跑）。
 - ⏳ systemone 后端响应解析为防御性实现，待有 workspace 凭据后实测。
 - ⚠️ 选项数上限 26（字母方案）；>5 选项在 top_logprobs=5 的 API 上概率不全（地板值兜底）。
-- ⚠️ 温度缩放为单参数全局拟合；Phase 0 样本量小，holdout 数字波动大，只作方向性结论。
+- ⚠️ 温度缩放为单参数全局拟合 + 小样本收缩；Phase 0 样本量小，holdout 数字波动大，只作方向性结论。
+- ✅ 评估修复轮（2026-11-20）：7 项修复（温度收缩/URL 归一化/CLI 后端参数/extra_body 自动检测/
+  输入校验/HF 空候选守卫/UTF-8 输出），34 项测试通过，收缩校准经离线对比实证。

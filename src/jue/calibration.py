@@ -110,3 +110,16 @@ def abstention_curve(records: list[dict], thresholds=(0.5, 0.7, 0.8, 0.9, 0.95))
             "abstained": n - len(kept),
         })
     return out
+
+
+def shrink_temperature(t: float, n: int, n0: float = 200.0) -> float:
+    """小样本收缩：T_final = T_fit ** (n / (n + n0))，log 空间向 T=1 收缩。
+
+    n 为校准集样本量，n0 为伪计数（先验强度）。n << n0 时 T≈1（信任原始概率），
+    n >> n0 时逼近纯 NLL 拟合值。缓解小样本下少数高置信错误主导 NLL 的过拟合。
+    """
+    if t <= 0:
+        raise ValueError("temperature 必须 > 0")
+    if n0 <= 0 or n <= 0:
+        return t
+    return t ** (n / (n + n0))

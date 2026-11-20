@@ -11,7 +11,8 @@ import pathlib
 import time
 
 from .backends.base import DecisionBackend
-from .calibration import abstention_curve, apply_temperature, fit_temperature, summarize
+from .calibration import (abstention_curve, apply_temperature, fit_temperature,
+                          shrink_temperature, summarize)
 from .schema import label_index, question_options, validate_questions
 
 
@@ -30,7 +31,7 @@ def _in_calib_split(item_id: str, qid: str, frac: float) -> bool:
 
 
 def run_eval(backend: DecisionBackend, items: list[dict], calib_frac: float = 0.5,
-             progress: bool = True) -> dict:
+             progress: bool = True, shrink_n0: float = 200.0) -> dict:
     records, errors = [], []
     t0 = time.time()
     for item in items:
@@ -53,16 +54,18 @@ def run_eval(backend: DecisionBackend, items: list[dict], calib_frac: float = 0.
                 print(f"  ... {len(records) + len(errors)} questions done", flush=True)
     elapsed = time.time() - t0
     return build_report(records, errors, len(items), elapsed, backend.name,
-                        getattr(backend, "model", None), calib_frac)
+                        getattr(backend, "model", None), calib_frac, shrink_n0)
 
 
 def build_report(records: list[dict], errors: list[dict], n_items: int,
-                 elapsed: float, backend_name: str, model, calib_frac: float = 0.5) -> dict:
+                 elapsed: float, backend_name: str, model, calib_frac: float = 0.5,
+                 shrink_n0: float = 200.0) -> dict:
     """从逐题记录构建报告（可离线复算，见 scripts/rebuild_report.py）。"""
     raw = summarize(records)
     fit_recs = [(r["probs"], r["label"]) for r in records if r["calib_split"]]
     eval_recs = [r for r in records if not r["calib_split"]]
-    temperature = fit_temperature(fit_recs) if fit_recs else 1.0
+    t_fit = fit_temperature(fit_recs) if fit_recs else 1.0
+    temperature = shrink_temperature(t_fit, len(fit_recs), shrink_n0)
     calibrated = []
     for r in records:
         p = apply_temperature(r["probs"], temperature)
@@ -75,6 +78,8 @@ def build_report(records: list[dict], errors: list[dict], n_items: int,
         "n_items": n_items, "n_questions": len(records), "n_errors": len(errors),
         "elapsed_sec": round(elapsed, 1),
         "temperature": round(temperature, 4),
+        "temperature_fit": round(t_fit, 4),
+        "shrinkage_n0": shrink_n0,
         "calib_frac": calib_frac,
         "raw": raw,
         "calibrated": summarize(calibrated),
@@ -107,7 +112,7 @@ def render_markdown(rep: dict) -> str:
         "",
         f"- 后端: `{rep['backend']}` / 模型: `{rep.get('model')}`",
         f"- 样本: {rep['n_items']} states / {rep['n_questions']} questions（失败 {rep['n_errors']}）",
-        f"- 耗时: {rep['elapsed_sec']}s，拟合温度 T = {rep['temperature']}（calib_frac={rep['calib_frac']}）",
+        f"- 耗时: {rep['elapsed_sec']}s，温度: NLL拟合 T={rep.get('temperature_fit', rep['temperature'])} → 收缩后 T={rep['temperature']}（n0={rep.get('shrinkage_n0', 200)}, calib_frac={rep['calib_frac']}）",
         "",
         "## 总体指标",
         "",

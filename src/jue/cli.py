@@ -9,6 +9,10 @@ from . import __version__
 
 
 def _backend_kwargs(args) -> dict:
+    backend = getattr(args, "backend", "openai")
+    if backend == "hf":
+        name = getattr(args, "model_name", None) or getattr(args, "model", None)
+        return {"model_name": name} if name else {}
     kw = {}
     if getattr(args, "base_url", None):
         kw["base_url"] = args.base_url
@@ -16,8 +20,6 @@ def _backend_kwargs(args) -> dict:
         kw["api_key"] = args.api_key
     if getattr(args, "model", None):
         kw["model"] = args.model
-    if getattr(args, "model_name", None):
-        kw["model_name"] = args.model_name
     return kw
 
 
@@ -28,6 +30,10 @@ def cmd_decide(args):
     state = args.state
     if args.state_file:
         state = open(args.state_file, encoding="utf-8").read()
+    if state is None:
+        raise SystemExit("错误：需要 --state 或 --state-file")
+    if not args.questions and not args.questions_file:
+        raise SystemExit("错误：需要 --questions 或 --questions-file")
     questions = json.loads(args.questions) if args.questions else json.load(open(args.questions_file, encoding="utf-8"))
     backend = make_backend(args.backend, **_backend_kwargs(args))
     answers = run_decision(backend, state, questions, abstain_threshold=args.abstain)
@@ -43,7 +49,7 @@ def cmd_eval(args):
         items = items[: args.limit]
     backend = make_backend(args.backend, **_backend_kwargs(args))
     print(f"评测 {len(items)} 条 state，后端={args.backend} ...", flush=True)
-    result = run_eval(backend, items, calib_frac=args.calib_frac)
+    result = run_eval(backend, items, calib_frac=args.calib_frac, shrink_n0=args.shrink_n0)
     out = save_results(result, args.out)
     rep = result["report"]
     print(f"完成: acc={rep['raw']['accuracy']:.4f} ece={rep['raw']['ece']:.4f} "
@@ -63,6 +69,11 @@ def cmd_serve(args):
 
 
 def main(argv=None):
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8")  # Windows GBK 控制台中文乱码
+        except Exception:
+            pass
     p = argparse.ArgumentParser(prog="jue", description="Jue (决) — 开源中文决策模型")
     p.add_argument("--version", action="version", version=__version__)
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -88,6 +99,7 @@ def main(argv=None):
     e.add_argument("--out", default="reports/run")
     e.add_argument("--limit", type=int)
     e.add_argument("--calib-frac", type=float, default=0.5)
+    e.add_argument("--shrink-n0", type=float, default=200.0, help="温度收缩伪计数（0=禁用收缩）")
     add_backend_args(e)
     e.set_defaults(fn=cmd_eval)
 

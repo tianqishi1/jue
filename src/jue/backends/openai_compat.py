@@ -54,7 +54,9 @@ class OpenAICompatBackend(DecisionBackend):
         prof = bailian_profile() or {}
         self.base_url = (base_url or os.environ.get("JUE_BASE_URL") or prof.get("base_url", "")).rstrip("/")
         if self.base_url and not self.base_url.endswith("/chat/completions"):
-            if "compatible-mode" not in self.base_url and "token-plan" in self.base_url:
+            if self.base_url.endswith("/v1"):
+                self.base_url += "/chat/completions"
+            elif "token-plan" in self.base_url:
                 self.base_url += "/compatible-mode/v1/chat/completions"
             else:
                 self.base_url += "/v1/chat/completions"
@@ -64,7 +66,12 @@ class OpenAICompatBackend(DecisionBackend):
         self.timeout = timeout
         self.max_retries = max_retries
         self.readout_retries = readout_retries
-        self.extra_body = {"enable_thinking": False} if extra_body is None else dict(extra_body)
+        if extra_body is None:
+            host = self.base_url.lower()
+            # 仅 DashScope 系端点需要关思考；vLLM/OpenAI 等对未知参数可能 400
+            self.extra_body = {"enable_thinking": False} if ("aliyuncs" in host or "dashscope" in host) else {}
+        else:
+            self.extra_body = dict(extra_body)
         if not self.base_url or not self.api_key:
             raise ValueError("缺少 base_url/api_key：请传参、设 JUE_BASE_URL/JUE_API_KEY，或配置 bl auth")
         self.calls = 0

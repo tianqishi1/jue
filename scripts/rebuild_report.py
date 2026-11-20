@@ -14,7 +14,8 @@ def main():
     records = [json.loads(l) for l in (run_dir / "records_raw.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
     meta = json.loads((run_dir / "report.json").read_text(encoding="utf-8"))
     result = build_report(records, meta.get("errors", []), meta["n_items"], meta["elapsed_sec"],
-                          meta["backend"], meta.get("model"), meta.get("calib_frac", 0.5))
+                          meta["backend"], meta.get("model"), meta.get("calib_frac", 0.5),
+                          meta.get("shrinkage_n0", 200.0))
     save_results(result, run_dir)
     rep = result["report"]
     print(f"rebuilt: acc={rep['raw']['accuracy']:.4f} ece={rep['raw']['ece']:.4f} "

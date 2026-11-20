@@ -96,8 +96,14 @@ def probs_from_next_token_logits(logits, letter_token_ids: list[list[int]], n_op
     """HF 本地路线：next-token logits + 每个字母的候选 token id 组 → 选项概率。"""
     import math as _m
 
+    ids_list = list(letter_token_ids[:n_options])
+    while len(ids_list) < n_options:
+        ids_list.append([])
     scores = []
-    for ids in letter_token_ids[:n_options]:
+    for ids in ids_list:
+        if not ids:
+            scores.append(-1e9)  # 该字母无单 token 变体 → 极低分而非崩溃
+            continue
         vals = [float(logits[i]) for i in ids]
         mx = max(vals)
         scores.append(mx + _m.log(sum(_m.exp(v - mx) for v in vals)))
