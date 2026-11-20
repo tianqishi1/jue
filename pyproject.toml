@@ -14,7 +14,7 @@ dependencies = []
 [project.optional-dependencies]
 server = ["fastapi>=0.110", "uvicorn>=0.29"]
 hf = ["torch>=2.2", "transformers>=4.51"]
-dev = ["pytest>=8"]
+dev = ["pytest>=8", "httpx>=0.27"]
 
 [project.scripts]
 jue = "jue.cli:main"

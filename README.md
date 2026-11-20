@@ -1,5 +1,7 @@
 # Jue（决）
 
+[![CI](https://github.com/tianqishi1/jue/actions/workflows/ci.yml/badge.svg)](https://github.com/tianqishi1/jue/actions/workflows/ci.yml) [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE) [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](pyproject.toml)
+
 **中文优先 · 校准透明 · 端侧可跑的开源决策模型。**
 
 Jue 是一个 "System One" 决策模型项目（品类由 [Jev](https://jev.ai) 开创）：
@@ -67,7 +69,13 @@ jue serve --backend openai --port 8000
 | score 相邻等级准确率 | 100%（score 错误全部是相邻等级） |
 | 拒答 τ=0.95 | 覆盖 62%，保留部分准确率 98.3% |
 
-详见 [Phase 0 实测发现](docs/phase0-findings.md)。关键教训已固化进代码：
+分领域准确率：电商 / Agent 路由 100% · 客服 95.2% · 审核 94.4% · 风控 85%。
+
+完整报告：[docs/benchmarks/phase0-qwen3.8-max.md](docs/benchmarks/phase0-qwen3.8-max.md) ·
+分析与教训：[Phase 0 实测发现](docs/phase0-findings.md) ·
+贡献指南：[CONTRIBUTING.md](CONTRIBUTING.md)（评测样本、新后端、校准方法都欢迎）
+
+关键教训已固化进代码：
 思考型模型必须 `enable_thinking=False`；服务端偶发空 logprobs 需重试；
 小样本温度缩放会过拟合 → 已用收缩先验修复（`--shrink-n0`，报告同时给原始/校准后指标）。
 

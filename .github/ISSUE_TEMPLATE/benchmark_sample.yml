@@ -1,0 +1,28 @@
+name: 评测样本
+description: 为中文决策评测集贡献难例（反讽、隐含意图、边界案例）
+labels: ["benchmark"]
+body:
+  - type: textarea
+    id: sample
+    attributes:
+      label: 样本（JSONL 格式）
+      description: 见 CONTRIBUTING.md「评测样本规范」；标签须有可辩护的唯一最佳答案
+      placeholder: |
+        {"id":"cs-009","domain":"customer_service","state":"...","questions":{"...":{"type":"noul","instructions":"...","label":true}}}
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: 为什么是难例
+      description: 现有模型容易在哪里判错？标签的辩护理由？
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: 数据合规
+      options:
+        - label: 样本为合成或已脱敏，不含真实用户隐私
+          required: true

@@ -1,0 +1,16 @@
+name: 功能建议
+description: 新后端、校准方法、端侧部署、生态集成等
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议内容
+      description: 想解决什么问题？为什么契合「中文 + 校准 + 端侧」定位？
+    validations:
+      required: true
+  - type: textarea
+    id: design
+    attributes:
+      label: 初步设计（可选）
+      description: 接口 / 数据 / 实验方案；涉及校准请说明用什么指标验证
