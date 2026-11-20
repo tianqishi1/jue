@@ -1,0 +1,1 @@
+{"intent":{"type":"choice","instructions":"核心诉求？","criteria":{"urge":"催发货","refund":"退款","complaint":"投诉"}},"refund_intent":{"type":"noul","instructions":"是否提到退款？"},"severity":{"type":"score","instructions":"严重程度？","criteria":["轻微","一般","严重","紧急"]}}

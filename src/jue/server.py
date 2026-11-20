@@ -1,6 +1,8 @@
-"""本地决策服务：POST /v1/decisions（Jev 风格），数据不出本机。"""
-from __future__ import annotations
+"""本地决策服务：POST /v1/decisions（Jev 风格），数据不出本机。
 
+注意：本模块刻意不用 `from __future__ import annotations`——
+DecisionRequest 定义在工厂函数内部，延迟注解会让 FastAPI 无法解析Body模型。
+"""
 from .backends.base import DecisionBackend
 from .engine import run_decision
 from .schema import SchemaError
